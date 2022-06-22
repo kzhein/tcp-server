@@ -1,25 +1,23 @@
 const net = require('net');
 
-const sockets = {};
+const sockets = new Map();
 
 const server = net.createServer(socket => {
   console.log(`CONNECTED: ${socket.remoteAddress}:${socket.remotePort}`);
 
-  const id = Date.now();
-  sockets[id] = socket;
+  sockets.set(socket, socket);
 
   socket.on('data', data => {
-    Object.keys(sockets).forEach(sckId => {
-      if (sckId * 1 !== id) {
-        sockets[sckId].write(
-          `${socket.remoteAddress}:${socket.remotePort}: ${data}`
-        );
+    sockets.forEach(sck => {
+      if (sck !== socket) {
+        sck.write(`${socket.remoteAddress}:${socket.remotePort}: ${data}`);
       }
     });
   });
 
   socket.on('close', () => {
-    delete sockets[id];
+    sockets.delete(socket);
+
     console.log(`CLOSED: ${socket.remoteAddress}:${socket.remotePort}`);
   });
 });
